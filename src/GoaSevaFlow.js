@@ -1,8 +1,8 @@
 /* global webkitSpeechRecognition */
-
 import React, { useState, useEffect, useRef } from 'react';
 import { FaMicrophone } from 'react-icons/fa';
 import logo from './assets/goasevaflow-logo.png';
+import './index.css';
 
 const GoaSevaFlow = () => {
   const [input, setInput] = useState('');
@@ -12,12 +12,13 @@ const GoaSevaFlow = () => {
   const recognitionRef = useRef(null);
   const chatEndRef = useRef(null);
 
-  // First bot message on page load
+  // Initial welcome message
   useEffect(() => {
     setChatHistory([
       {
         from: 'bot',
         text: 'Hi! I’m GoaSevaFlow 🤖. How can I assist you today?',
+        type: 'text',
       },
     ]);
   }, []);
@@ -27,7 +28,7 @@ const GoaSevaFlow = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
 
-  // Speech recognition setup
+  // Set up speech recognition
   useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -49,7 +50,7 @@ const GoaSevaFlow = () => {
   }, []);
 
   const startListening = () => {
-    if (recognitionRef.current) {
+    if (recognitionRef.current && !listening) {
       setListening(true);
       recognitionRef.current.start();
     }
@@ -57,7 +58,8 @@ const GoaSevaFlow = () => {
 
   const handleSend = (message) => {
     if (!message.trim()) return;
-    const userMsg = { from: 'user', text: message };
+
+    const userMsg = { from: 'user', text: message, type: 'text' };
     setChatHistory((prev) => [...prev, userMsg]);
     setInput('');
     setTyping(true);
@@ -65,8 +67,10 @@ const GoaSevaFlow = () => {
     setTimeout(() => {
       const botReply = {
         from: 'bot',
-        text: `You said: "${message}". (This is where AI will reply.)`,
+        text: `Here is the guidance for: "${message}"`,
+        type: 'canvas', // show diagram canvas box for mapped flow
       };
+
       setChatHistory((prev) => [...prev, botReply]);
       setTyping(false);
     }, 1000);
@@ -77,6 +81,7 @@ const GoaSevaFlow = () => {
       {
         from: 'bot',
         text: 'Hi! I’m GoaSevaFlow 🤖. How can I assist you today?',
+        type: 'text',
       },
     ]);
     setInput('');
@@ -108,7 +113,15 @@ const GoaSevaFlow = () => {
                 ? 'goasevaflow-user-bubble'
                 : 'goasevaflow-bot-bubble'
             }>
-            {msg.text}
+            {msg.type === 'canvas' ? (
+              <pre className='bot-canvas-box'>
+                {`[This space will show mapped guidance/flow chart for: "${msg.text
+                  .replace('Here is the guidance for: "', '')
+                  .replace('"', '')}"]`}
+              </pre>
+            ) : (
+              msg.text
+            )}
           </div>
         ))}
         {typing && (
@@ -122,7 +135,7 @@ const GoaSevaFlow = () => {
       <div className='goasevaflow-input-section'>
         <input
           type='text'
-          placeholder='Ask me anything...'
+          placeholder='Ask me about Goa services...'
           value={input}
           onChange={(e) => setInput(e.target.value)}
           className='goasevaflow-input'
